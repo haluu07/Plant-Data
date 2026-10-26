@@ -1,0 +1,22 @@
+{
+  "description": "Mapping between PlantVillage classes and PlantDoc classes for Cross-Domain Generalization benchmark",
+  "shared_classes": {
+    "Apple___Apple_scab": "Apple Scab Leaf",
+    "Apple___Black_rot": "Apple leaf spot",
+    "Apple___Cedar_apple_rust": "Apple rust leaf",
+    "Apple___healthy": "Apple leaf",
+    "Corn_(maize)___Common_rust_": "Corn rust leaf",
+    "Corn_(maize)___Northern_Leaf_Blight": "Corn leaf blight",
+    "Corn_(maize)___healthy": "Corn leaf",
+    "Grape___Black_rot": "Grape leaf black rot",
+    "Grape___healthy": "Grape leaf",
+    "Potato___Early_blight": "Potato leaf early blight",
+    "Potato___Late_blight": "Potato leaf late blight",
+    "Potato___healthy": "Potato leaf",
+    "Tomato___Bacterial_spot": "Tomato leaf bacterial spot",
+    "Tomato___Early_blight": "Tomato Early blight leaf",
+    "Tomato___Late_blight": "Tomato leaf late blight",
+    "Tomato___Septoria_leaf_spot": "Tomato Septoria leaf spot",
+    "Tomato___healthy": "Tomato leaf"
+  }
+}

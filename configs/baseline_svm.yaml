@@ -1,0 +1,21 @@
+model:
+  name: "hog_svm"
+  kernel: "rbf"
+  C: 10.0
+  gamma: "scale"
+
+feature_extraction:
+  image_size: [128, 128]
+  hog:
+    orientations: 9
+    pixels_per_cell: [8, 8]
+    cells_per_block: [2, 2]
+    block_norm: "L2-Hys"
+  color_hist:
+    bins_per_channel: 16
+    color_space: "HSV"
+
+data:
+  dataset_root: "data/processed"
+  batch_size: 64
+  seed: 42
