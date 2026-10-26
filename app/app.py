@@ -31,7 +31,13 @@ def load_model_instance(model_name, checkpoint_path):
     CLASS_NAMES = chk.get("class_names", [f"Class {i}" for i in range(17)])
     num_classes = len(CLASS_NAMES)
 
-    model = build_model(model_name=model_name, num_classes=num_classes).to(DEVICE)
+    model = build_model(
+        model_name=model_name,
+        num_classes=num_classes,
+        use_cbam=chk.get("use_cbam", False),
+        use_mixstyle=chk.get("use_mixstyle", False),
+        use_concat_pool=chk.get("use_concat_pool", False),
+    ).to(DEVICE)
     load_checkpoint(checkpoint_path, model, device=DEVICE)
     model.eval()
 

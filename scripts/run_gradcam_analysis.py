@@ -84,8 +84,19 @@ def main():
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # Khởi tạo model và nạp weights
-    model = build_model(model_name=args.model, num_classes=args.num_classes).to(device)
+    # Lấy danh sách tên class và cấu hình từ checkpoint
+    chk = torch.load(args.checkpoint, map_location="cpu")
+    class_names = chk.get("class_names", None)
+    num_classes = len(class_names) if class_names else args.num_classes
+
+    # Khởi tạo model tương ứng cấu hình và nạp weights
+    model = build_model(
+        model_name=args.model,
+        num_classes=num_classes,
+        use_cbam=chk.get("use_cbam", False),
+        use_mixstyle=chk.get("use_mixstyle", False),
+        use_concat_pool=chk.get("use_concat_pool", False),
+    ).to(device)
     load_checkpoint(args.checkpoint, model, device=device)
 
     # Lấy tầng conv cuối

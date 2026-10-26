@@ -68,8 +68,15 @@ def main():
         use_advanced_aug=False,
     )
 
-    # Nạp mô hình
-    model = build_model(model_name=args.model, num_classes=num_classes).to(device)
+    # Nạp mô hình và tự động nhận diện cấu hình từ checkpoint
+    ckpt_info = torch.load(args.checkpoint, map_location="cpu")
+    model = build_model(
+        model_name=args.model,
+        num_classes=num_classes,
+        use_cbam=ckpt_info.get("use_cbam", False),
+        use_mixstyle=ckpt_info.get("use_mixstyle", False),
+        use_concat_pool=ckpt_info.get("use_concat_pool", False),
+    ).to(device)
     load_checkpoint(args.checkpoint, model, device=device)
 
     # Đánh giá In-Domain

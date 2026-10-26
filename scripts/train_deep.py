@@ -107,6 +107,10 @@ def main():
     parser.add_argument("--batch_size", type=int, default=32, help="Kích thước batch")
     parser.add_argument("--lr", type=float, default=None, help="Learning rate")
     parser.add_argument("--use_advanced_aug", action="store_true", help="Bật Augmentation nâng cao (CutMix, Erasing, ColorJitter)")
+    parser.add_argument("--use_cbam", action="store_true", help="Tích hợp cơ chế Attention CBAM (Channel & Spatial)")
+    parser.add_argument("--use_mixstyle", action="store_true", help="Tích hợp MixStyle (ICLR 2021) chống Background Domain Shift")
+    parser.add_argument("--use_concat_pool", action="store_true", help="Sử dụng Adaptive Concat Pooling (AvgPool + MaxPool)")
+    parser.add_argument("--backbone_lr_ratio", type=float, default=0.1, help="Tỷ lệ learning rate cho Backbone so với Classifier Head")
     parser.add_argument("--num_workers", type=int, default=4, help="Số luồng nạp dữ liệu")
     parser.add_argument("--checkpoint_dir", type=str, default="experiments/checkpoints")
     args = parser.parse_args()
@@ -124,7 +128,19 @@ def main():
     batch_size = args.batch_size or cfg.get("data", {}).get("train_batch_size", 32)
     lr = args.lr or cfg.get("training", {}).get("learning_rate", 0.001)
 
-    exp_tag = f"{args.model}_adv_aug" if args.use_advanced_aug else f"{args.model}_standard"
+    tags = [args.model]
+    if args.use_advanced_aug:
+        tags.append("adv_aug")
+    if args.use_cbam:
+        tags.append("cbam")
+    if args.use_mixstyle:
+        tags.append("mixstyle")
+    if args.use_concat_pool:
+        tags.append("concatpool")
+    if len(tags) == 1:
+        tags.append("standard")
+
+    exp_tag = "_".join(tags)
     logger = setup_logger(exp_tag, log_file=f"experiments/logs/{exp_tag}.log")
     logger.info(f"=== BẮT ĐẦU HUẤN LUYỆN: {exp_tag.upper()} ===")
 
@@ -149,23 +165,29 @@ def main():
         use_advanced_aug=args.use_advanced_aug,
     )
 
-    # 2. Xây dựng mô hình
+    # 2. Xây dựng mô hình với các tùy chọn tối ưu
     model = build_model(
         model_name=args.model,
         num_classes=num_classes,
         pretrained=True,
         dropout=cfg.get("model", {}).get("dropout", 0.2),
+        use_cbam=args.use_cbam,
+        use_mixstyle=args.use_mixstyle,
+        use_concat_pool=args.use_concat_pool,
     ).to(device)
 
-    # 3. Hàm mất mát & Tối ưu hóa
+    # 3. Hàm mất mát & Tối ưu hóa với Differential Learning Rate
     label_smoothing = cfg.get("training", {}).get("label_smoothing", 0.1)
     criterion = nn.CrossEntropyLoss(label_smoothing=label_smoothing)
 
+    # Phân tầng LR: backbone chạy lr nhỏ (giữ đặc trưng ImageNet), head chạy lr chuẩn
+    param_groups = model.get_parameter_groups(base_lr=lr, backbone_lr_ratio=args.backbone_lr_ratio)
+
     optimizer_name = cfg.get("training", {}).get("optimizer", "adamw").lower()
     if optimizer_name == "sgd":
-        optimizer = SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=1e-4)
+        optimizer = SGD(param_groups, lr=lr, momentum=0.9, weight_decay=1e-4)
     else:
-        optimizer = AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
+        optimizer = AdamW(param_groups, lr=lr, weight_decay=1e-4)
 
     scheduler = CosineAnnealingLR(optimizer, T_max=epochs, eta_min=1e-6)
     scaler = torch.cuda.amp.GradScaler(enabled=device.type == "cuda")
@@ -204,6 +226,9 @@ def main():
                     "best_acc": best_val_acc,
                     "class_names": class_names,
                     "use_advanced_aug": args.use_advanced_aug,
+                    "use_cbam": args.use_cbam,
+                    "use_mixstyle": args.use_mixstyle,
+                    "use_concat_pool": args.use_concat_pool,
                 },
                 is_best=True,
                 checkpoint_dir=args.checkpoint_dir,

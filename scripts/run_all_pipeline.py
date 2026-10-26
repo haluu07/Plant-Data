@@ -62,6 +62,33 @@ def main():
         "4. Huấn luyện ResNet-50 với Advanced Augmentation (CutMix, Erasing, ColorJitter)",
     )
 
+    # 5. Deep Learning: ResNet-50 + CBAM Attention (Triệt tiêu nhiễu nền)
+    run_command(
+        [
+            sys.executable, "scripts/train_deep.py",
+            "--model", "resnet50",
+            "--epochs", str(args.epochs),
+            "--batch_size", str(args.batch_size),
+            "--use_cbam",
+            "--use_concat_pool",
+        ],
+        "5. Huấn luyện ResNet-50 với CBAM Attention & Concat Pooling (Lọc sạch bối cảnh nền)",
+    )
+
+    # 6. Deep Learning: ResNet-50 + MixStyle + Adv Aug (SOTA Domain Generalization)
+    run_command(
+        [
+            sys.executable, "scripts/train_deep.py",
+            "--model", "resnet50",
+            "--epochs", str(args.epochs),
+            "--batch_size", str(args.batch_size),
+            "--use_mixstyle",
+            "--use_advanced_aug",
+            "--use_cbam",
+        ],
+        "6. Huấn luyện ResNet-50 SOTA (MixStyle Domain Generalization + CBAM + Adv Aug)",
+    )
+
     print("\n" + "=" * 70)
     print("🎉 TOÀN BỘ QUÁ TRÌNH THỰC NGHIỆM ĐÃ HOÀN TẤT THÀNH CÔNG!")
     print("   - Checkpoints đã lưu tại: experiments/checkpoints/")
